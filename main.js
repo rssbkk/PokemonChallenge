@@ -1,6 +1,15 @@
 import * as THREE from 'three'
 import gsap from 'gsap'
 import GUI from 'lil-gui'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+
+/**
+ * Loaders
+ */
+const rgbeLoader = new RGBELoader()
+const loader = new THREE.TextureLoader();
+const cubeTextureLoader = new THREE.CubeTextureLoader()
 
 /**
  * Debug
@@ -20,6 +29,27 @@ const debugObject = {}
 const debugPlinth = {}
 const debugCard = {}
 const debugTargetObject = {}
+
+/**
+ * Environment Maps (RGBE Equirectangular) & (LDR Cube Maps)
+ */
+// const texture = loader.load("assets/environmentMaps/bulbasaurBG.jpg",
+//     () => {
+//       const leftCardBG = new THREE.WebGLCubeRenderTarget(texture.image.height);
+//       leftCardBG.fromEquirectangularTexture(renderer, texture);
+//       leftCardScene.background = leftCardBG.texture;
+//     }
+//   );
+
+// Left Card Debug
+const leftCardCubeMap = cubeTextureLoader.load([
+  'assets/environmentMaps/bulbasaurCubeMap/px.png',
+  'assets/environmentMaps/bulbasaurCubeMap/nx.png',
+  'assets/environmentMaps/bulbasaurCubeMap/py.png',
+  'assets/environmentMaps/bulbasaurCubeMap/nx.png',
+  'assets/environmentMaps/bulbasaurCubeMap/pz.png',
+  'assets/environmentMaps/bulbasaurCubeMap/nx.png'
+])
 
 /**
  * Base
@@ -48,12 +78,11 @@ centerCardScene.background = new THREE.Color("#00ff00")
 
 // Left Card Scene
 const leftCardScene = new THREE.Scene()
-leftCardScene.background = new THREE.Color("#cec92c")
+leftCardScene.background = leftCardCubeMap
 
 // Right Card Scene
 const rightCardScene = new THREE.Scene()
 rightCardScene.background = new THREE.Color("#af30c0")
-
 
 /**
  * Object
@@ -337,6 +366,7 @@ debugCard.height = 0.18
   centerCardScene.add(targetObject)
 
 const targetObjectTweaks = gui.addFolder('Target Object Tweaks')
+targetObjectTweaks.close()
 
 targetObjectTweaks
   .add(targetObject.position, 'y')
@@ -368,6 +398,7 @@ leftTargetObject.position.z = - 5
 leftCardScene.add(leftTargetObject)
 
 const leftTargetObjectTweaks = gui.addFolder('Left Target Object Tweaks')
+leftTargetObjectTweaks.close()
 
 leftTargetObjectTweaks
 .add(targetObject.position, 'y')
@@ -398,7 +429,8 @@ leftTargetObjectTweaks
   // scene.add(targetObject)
   rightCardScene.add(rightTargetObject)
   
-  const rightTargetObjectTweaks = gui.addFolder('Left Target Object Tweaks')
+  const rightTargetObjectTweaks = gui.addFolder('Right Target Object Tweaks')
+  rightTargetObjectTweaks.close()
   
   rightTargetObjectTweaks
   .add(targetObject.position, 'y')
