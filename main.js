@@ -46,9 +46,9 @@ const leftCardCubeMap = cubeTextureLoader.load([
   'assets/environmentMaps/bulbasaurCubeMap/px.png',
   'assets/environmentMaps/bulbasaurCubeMap/nx.png',
   'assets/environmentMaps/bulbasaurCubeMap/py.png',
-  'assets/environmentMaps/bulbasaurCubeMap/nx.png',
+  'assets/environmentMaps/bulbasaurCubeMap/ny.png',
   'assets/environmentMaps/bulbasaurCubeMap/pz.png',
-  'assets/environmentMaps/bulbasaurCubeMap/nx.png'
+  'assets/environmentMaps/bulbasaurCubeMap/nz.png'
 ])
 
 /**
@@ -87,6 +87,12 @@ rightCardScene.background = new THREE.Color("#af30c0")
 /**
  * Object
  */
+// Details
+const cardDetails = {
+  width: 2.5 / 4, 
+  height: 3.5 / 4
+}
+
 // Plinth
 debugObject.color = '#dedede'
 
@@ -206,9 +212,9 @@ debugPlinth.depth = 1
 
 // Center Card
 const cardSizes = { width: 0.125, height: 0.18 }
-const renderTargetCenter = new THREE.WebGLRenderTarget(cardSizes.width * 2056, cardSizes.height * 2056);
+const renderTargetCenter = new THREE.WebGLRenderTarget(cardSizes.width * 1024, cardSizes.height * 1024);
 
-const cardGeometry = new THREE.PlaneGeometry(0.5, 0.72)
+const cardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
 const cardMaterial = new THREE.MeshBasicMaterial({
   map: renderTargetCenter.texture
 })
@@ -324,14 +330,18 @@ debugCard.height = 0.18
 // Left Card
   const renderTargetLeft = new THREE.WebGLRenderTarget(cardSizes.width * 2056, cardSizes.height * 2056);
 
-  const leftCardGeometry = new THREE.PlaneGeometry(0.5, 0.72)
+  const leftCardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
   const leftCardMaterial = new THREE.MeshBasicMaterial({
     map: renderTargetLeft.texture
   })
   const leftCard = new THREE.Mesh(leftCardGeometry, leftCardMaterial)
 
+  leftCard.position.x = -0.65
   leftCard.position.y = 0.3
-  leftCard.position.x = -0.6
+  leftCard.position.z = 0.2
+
+  leftCard.rotation.y = 0.5
+
   scene.add(leftCard)
 
   const leftCardTweaks = gui.addFolder('Left Card Tweaks')
@@ -343,18 +353,37 @@ debugCard.height = 0.18
     .max(10)
     .step(0.01)
     .name('horizontal')
+  
+    leftCardTweaks
+    .add(leftCard.position, 'z')
+    .min(- 10)
+    .max(10)
+    .step(0.01)
+    .name('range')
+
+  leftCardTweaks
+    .add(leftCard.rotation, 'y')
+    .min(- 10)
+    .max(10)
+    .step(0.01)
+    .name('rotation Y')
+
 
 // Right Card
   const renderTargetRight = new THREE.WebGLRenderTarget(cardSizes.width * 2056, cardSizes.height * 2056);
 
-  const rightCardGeometry = new THREE.PlaneGeometry(0.5, 0.72)
+  const rightCardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
   const rightCardMaterial = new THREE.MeshBasicMaterial({
     map: renderTargetRight.texture
   })
   const rightCard = new THREE.Mesh(rightCardGeometry, rightCardMaterial)
 
+  
+  rightCard.position.x = 0.65
   rightCard.position.y = 0.3
-  rightCard.position.x = 0.6
+  rightCard.position.z = 0.2
+
+  rightCard.rotation.y = -0.5
   scene.add(rightCard)
 
 // inTargetObject
