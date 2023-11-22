@@ -1,18 +1,22 @@
 import * as THREE from 'three'
 import gsap from 'gsap'
 import GUI from 'lil-gui'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
-
+ 
 /**
- * Loaders
- */
+* Loaders
+*/
 const rgbeLoader = new RGBELoader()
 const loader = new THREE.TextureLoader();
-
+const gltfLoader = new GLTFLoader();
+const dracoLoader = new DRACOLoader();
+ 
 /**
- * Debug
- */
+* Debug
+*/
 const gui = new GUI({
     width: 300,
     title: 'Debug UI',
@@ -23,38 +27,47 @@ window.addEventListener('keydown', (event) =>
     if(event.key == 'h')
         gui.show(gui._hidden)
 })
-
-const test = 1;
-
+ 
 const debugObject = {}
 const debugPlinth = {}
 const debugCard = {}
 const debugTargetObject = {}
-
+ 
 /**
- * Base
- */
+* Base
+*/
 // Sizes
 const sizes = {
   width: window.innerWidth,
   height: window.innerHeight
 }
 
+// Canvas
+const canvas = document.querySelector('canvas.webgl')
+
+// Renderer
+const renderer = new THREE.WebGLRenderer({
+  canvas: canvas,
+  antialias: true
+})
+renderer.setSize(sizes.width, sizes.height)
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+ 
 window.addEventListener('resize', () =>
 {
 // Update sizes
 sizes.width = window.innerWidth
 sizes.height = window.innerHeight
-
+ 
 // Update camera
 camera.aspect = sizes.width / sizes.height
 camera.updateProjectionMatrix()
-
+ 
 // Update renderer
 renderer.setSize(sizes.width, sizes.height)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
-
+ 
 // Cursor
 const cursor = {
   x: 0,
@@ -66,28 +79,50 @@ window.addEventListener('mousemove', (event) =>
   cursor.y = event.clientY / sizes.height - 0.5
 })
 
-// Canvas
-const canvas = document.querySelector('canvas.webgl')
+window.addEventListener('dblclick', (event)=>
+{
+  if(currentIntersect.object === card)
+  {
+    console.log('animate card1');
+ 
+    gsap.to(card.position, {duration: 1, z: 1})
+    gsap.to(card.rotation, {duration: 1, z: (1.5 * Math.PI)})
 
+  } else if(currentIntersect.object === leftCard)
+  {
+   console.log('animate leftCard');
+  }if(currentIntersect.object === rightCard)
+  {
+    console.log('animate rightCard');
+  }
+})
+ 
+// Mouse
+const mouse = new THREE.Vector2()
+ 
+window.addEventListener('mousemove', (event) =>
+{
+  mouse.x = event.clientX / sizes.width * 2 - 1
+  mouse.y = - (event.clientY / sizes.height) * 2 + 1
+})
+ 
 // Primary Scene
 const scene = new THREE.Scene()
-scene.background = new THREE.Color("#554e4e")
-
+scene.background = new THREE.Color("#FEFBEA")
+ 
 // Center Card Scene
 const centerCardScene = new THREE.Scene()
-centerCardScene.rotation.y = 4
-centerCardScene.background = new THREE.Color("#00ff00")
-
+ 
 // Left Card Scene
 const leftCardScene = new THREE.Scene()
-
+ 
 // Right Card Scene
 const rightCardScene = new THREE.Scene()
-rightCardScene.background = new THREE.Color("#af30c0")
-
+rightCardScene.rotation.y = 5.5
+ 
 /**
- * Environment Maps (RGBE Equirectangular) & (LDR Cube Maps)
- */
+* Environment Maps (RGBE Equirectangular) & (LDR Cube Maps)
+*/
 const centerCardEnvMap = loader.load("assets/environmentMaps/charmanderBG.jpg",
     () => {
       const centerCardBG = new THREE.WebGLCubeRenderTarget(centerCardEnvMap.image.height);
@@ -95,7 +130,7 @@ const centerCardEnvMap = loader.load("assets/environmentMaps/charmanderBG.jpg",
       centerCardScene.background = centerCardBG.texture;
     }
   );
-
+ 
 const leftCardEnvMap = loader.load("assets/environmentMaps/bulbasaurBG.jpg",
     () => {
       const leftCardBG = new THREE.WebGLCubeRenderTarget(leftCardEnvMap.image.height);
@@ -103,7 +138,7 @@ const leftCardEnvMap = loader.load("assets/environmentMaps/bulbasaurBG.jpg",
       leftCardScene.background = leftCardBG.texture;
     }
   );
-
+ 
 const rightCardEnvMap = loader.load("assets/environmentMaps/squirtleBG.jpg",
     () => {
       const rightCardBG = new THREE.WebGLCubeRenderTarget(rightCardEnvMap.image.height);
@@ -111,46 +146,57 @@ const rightCardEnvMap = loader.load("assets/environmentMaps/squirtleBG.jpg",
       rightCardScene.background = rightCardBG.texture;
     }
   );
+ 
+/**
+ * LIGHTS
+ */
+const centerAmbientLight = new THREE.AmbientLight(0x404040, 80)
+const leftAmbientLight = new THREE.AmbientLight(0x404040, 100)
+const rightAmbientLight = new THREE.AmbientLight(0x404040, 100)
+centerCardScene.add(centerAmbientLight)
+leftCardScene.add(leftAmbientLight)
+rightCardScene.add(rightAmbientLight)
 
 /**
- * Object
- */
+* Object
+*/
 // Details
 const cardDetails = {
-  width: 2.5 / 4, 
+  width: 2.5 / 4,
   height: 3.5 / 4
 }
-
+ 
 // Center Card
 const cardSizes = { width: 0.125, height: 0.18 }
-const renderTargetCenter = new THREE.WebGLRenderTarget(cardSizes.width * 1024, cardSizes.height * 1024);
-
+const renderTargetCenter = new THREE.WebGLRenderTarget(cardSizes.width * 2048, cardSizes.height * 2048);
+ 
 const cardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
 const cardMaterial = new THREE.MeshBasicMaterial({
   map: renderTargetCenter.texture
 })
 const card = new THREE.Mesh(cardGeometry, cardMaterial)
-
+ 
 card.position.y = 0.3
+card.position.z = 0.04
 scene.add(card)
-
+ 
 const cardTweaks = gui.addFolder('Card Tweaks')
 cardTweaks.close()
-
+ 
 cardTweaks
   .add(card.position, 'y')
   .min(- 10)
   .max(10)
   .step(0.01)
   .name('vertical')
-
+ 
 cardTweaks
   .add(card.position, 'x')
   .min(- 10)
   .max(10)
   .step(0.01)
   .name('horizontal')
-
+ 
 cardTweaks
   .add(card.position, 'z')
   .min(- 10)
@@ -158,13 +204,16 @@ cardTweaks
   .step(0.01)
   .name('depth')
 
+cardTweaks
+  .add(card, 'visible')
+ 
 debugCard.spin = () =>
 {
     gsap.to(card.rotation, { duration: 1, y: card.rotation.y + Math.PI * 2 })
 }
 cardTweaks
     .add(debugCard, 'spin')
-
+ 
 debugCard.subdivision = 2
 cardTweaks
   .add(debugCard, 'subdivision')
@@ -179,7 +228,7 @@ cardTweaks
         debugCard.subdivision, debugCard.subdivision, debugCard.subdivision
     )
   })
-
+ 
 debugCard.scale = 3.3
 cardTweaks
   .add(debugCard, 'scale')
@@ -194,7 +243,7 @@ cardTweaks
     debugCard.subdivision, debugCard.subdivision, debugCard.subdivision
   )
 })
-
+ 
 debugCard.width = 0.125
   cardTweaks
     .add(debugCard, 'width')
@@ -209,7 +258,7 @@ debugCard.width = 0.125
           debugCard.subdivision, debugCard.subdivision, debugCard.subdivision
       )
     })
-
+ 
 debugCard.height = 0.18
   cardTweaks
     .add(debugCard, 'height')
@@ -224,41 +273,41 @@ debugCard.height = 0.18
           debugCard.subdivision, debugCard.subdivision, debugCard.subdivision
       )
     })
-    
+   
 // Left Card
   const renderTargetLeft = new THREE.WebGLRenderTarget(cardSizes.width * 2056, cardSizes.height * 2056);
-
+ 
   const leftCardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
   const leftCardMaterial = new THREE.MeshBasicMaterial({
     map: renderTargetLeft.texture
   })
   const leftCard = new THREE.Mesh(leftCardGeometry, leftCardMaterial)
-
+ 
   leftCard.position.x = -0.65
   leftCard.position.y = 0.3
   leftCard.position.z = 0.2
-
+ 
   leftCard.rotation.y = 0.5
-
+ 
   scene.add(leftCard)
-
+ 
   const leftCardTweaks = gui.addFolder('Left Card Tweaks')
   leftCardTweaks.close()
-
+ 
   leftCardTweaks
     .add(leftCard.position, 'x')
     .min(- 10)
     .max(10)
     .step(0.01)
     .name('horizontal')
-  
+ 
     leftCardTweaks
     .add(leftCard.position, 'z')
     .min(- 10)
     .max(10)
     .step(0.01)
     .name('range')
-
+ 
   leftCardTweaks
     .add(leftCard.rotation, 'y')
     .min(- 10)
@@ -266,234 +315,276 @@ debugCard.height = 0.18
     .step(0.01)
     .name('rotation Y')
 
+  leftCardTweaks
+    .add(leftCard, 'visible')
+ 
 
 // Right Card
   const renderTargetRight = new THREE.WebGLRenderTarget(cardSizes.width * 2056, cardSizes.height * 2056);
-
+ 
   const rightCardGeometry = new THREE.PlaneGeometry(cardDetails.width, cardDetails.height)
   const rightCardMaterial = new THREE.MeshBasicMaterial({
     map: renderTargetRight.texture
   })
   const rightCard = new THREE.Mesh(rightCardGeometry, rightCardMaterial)
-
-  
+ 
+ 
   rightCard.position.x = 0.65
   rightCard.position.y = 0.3
   rightCard.position.z = 0.2
-
+ 
   rightCard.rotation.y = -0.5
   scene.add(rightCard)
 
+  const rightCardTweaks = gui.addFolder('Right Card Tweaks')
+  rightCardTweaks.close()
+
+  rightCardTweaks
+    .add(rightCard, 'visible')
+ 
 // inTargetObject
-  const targetObjectGeometry = new THREE.CylinderGeometry(1, 1, 1, 8)
-  const targetObjectMaterial = new THREE.MeshBasicMaterial({ color: '#FF0000'})
-  const targetObject = new THREE.Mesh(targetObjectGeometry, targetObjectMaterial)
-  targetObject.position.y = 0.25
-  // scene.add(targetObject)
-  centerCardScene.add(targetObject)
 
-const targetObjectTweaks = gui.addFolder('Target Object Tweaks')
-targetObjectTweaks.close()
-
-targetObjectTweaks
-  .add(targetObject.position, 'y')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('vertical')
-
-targetObjectTweaks
-  .add(targetObject.position, 'x')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('horizontal')
-
-targetObjectTweaks
-  .add(targetObject.position, 'z')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('depth')
-
-  // inTargetObject Left
-const leftTargetObjectGeometry = new THREE.ConeGeometry(1, 1, 8)
-const leftTargetObjectMaterial = new THREE.MeshBasicMaterial({ color: '#0000ff'})
-const leftTargetObject = new THREE.Mesh(leftTargetObjectGeometry, leftTargetObjectMaterial)
-leftTargetObject.position.y = 0.25
-// scene.add(targetObject)
-leftCardScene.add(leftTargetObject)
-
-const leftTargetObjectTweaks = gui.addFolder('Left Target Object Tweaks')
-leftTargetObjectTweaks.close()
-
-leftTargetObjectTweaks
-.add(leftTargetObject.position, 'y')
-.min(- 10)
-.max(10)
-.step(0.01)
-.name('vertical')
-
-leftTargetObjectTweaks
-.add(leftTargetObject.position, 'x')
-.min(- 10)
-.max(10)
-.step(0.01)
-.name('horizontal')
-
-leftTargetObjectTweaks
-.add(leftTargetObject.position, 'z')
-.min(- 10)
-.max(10)
-.step(0.01)
-.name('depth')
-
-  // inTargetObject Right
-  const rightTargetObjectGeometry = new THREE.DodecahedronGeometry(1)
-  const rightTargetObjectMaterial = new THREE.MeshBasicMaterial({ color: '#0000ff'})
-  const rightTargetObject = new THREE.Mesh(rightTargetObjectGeometry, rightTargetObjectMaterial)
-  rightTargetObject.position.z = 0.25
-  // scene.add(targetObject)
-  rightCardScene.add(rightTargetObject)
-  
-  const rightTargetObjectTweaks = gui.addFolder('Right Target Object Tweaks')
-  rightTargetObjectTweaks.close()
-  
-  rightTargetObjectTweaks
-  .add(targetObject.position, 'y')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('vertical')
-  
-  rightTargetObjectTweaks
-  .add(targetObject.position, 'x')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('horizontal')
-  
-  rightTargetObjectTweaks
-  .add(targetObject.position, 'z')
-  .min(- 10)
-  .max(10)
-  .step(0.01)
-  .name('depth')
+gltfLoader.load('/assets/models/charmander.gltf',
+(gltf) =>
+{
+  centerCardScene.add(gltf.scene)
+}
+) 
+gltfLoader.load('/assets/models/bulbasaur.gltf',
+(gltf) =>
+{
+  gltf.scene.rotation.y = Math.PI
+  leftCardScene.add(gltf.scene)
+}
+) 
+gltfLoader.load('/assets/models/squirtle.gltf',
+(gltf) =>
+{
+  rightCardScene.add(gltf.scene)
+}
+) 
 
 /**
- * Camera
- */
+* Camera
+*/
 // Base Camera
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
 camera.position.x = 0
 camera.position.y = 1
 camera.position.z = 2
-camera.lookAt(0, 0.5, -2)
+const controls = new OrbitControls( camera, renderer.domElement );
 scene.add(camera)
 
+const cameraTweaks = gui.addFolder('Camera Tweaks')
+const mainCameraTweaks = cameraTweaks.addFolder('Main Camera')
+   
+mainCameraTweaks
+  .add(camera.rotation, 'x')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera Rotation x')
+   
+mainCameraTweaks
+  .add(camera.rotation, 'y')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera Rotation y')
+   
+mainCameraTweaks
+  .add(camera.rotation, 'z')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera Rotation z')
+
+  mainCameraTweaks
+  .add(camera.position, 'x')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera position x')
+   
+mainCameraTweaks
+  .add(camera.position, 'y')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera position y')
+   
+mainCameraTweaks
+  .add(camera.position, 'z')
+  .min(0)
+  .max(12)
+  .step(0.1)
+  .name('Camera position z')
+ 
 // Center Card Camera
 const centerCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 centerCardCamera.position.x = 0
 centerCardCamera.position.y = 1
 centerCardCamera.position.z = 4.5
-centerCardCamera.lookAt(targetObject.position)
+centerCardCamera.lookAt(0, 0, 0)
 centerCardScene.add(centerCardCamera)
-
+ 
 // Left Card Camera
 const leftCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 leftCardCamera.position.x = 0
 leftCardCamera.position.y = 1
 leftCardCamera.position.z = - 4.5
-leftCardCamera.lookAt(leftTargetObject.position)
+leftCardCamera.lookAt(0, 0, 0)
 leftCardScene.add(leftCardCamera)
-
+ 
 // Right Card Camera
 const rightCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 rightCardCamera.position.x = 0
 rightCardCamera.position.y = 1
 rightCardCamera.position.z = 4.5
-rightCardCamera.lookAt(rightTargetObject.position)
+rightCardCamera.lookAt(0,0,0)
 rightCardScene.add(rightCardCamera)
 
-const cameraTweaks = gui.addFolder('Camera Tweaks')
 const centerCardCameraTweaks = cameraTweaks.addFolder('Center Camera')
-
+ 
 centerCardCameraTweaks
   .add(centerCardScene.rotation, 'x')
-  .min(1)
+  .min(0)
   .max(12)
   .step(0.1)
-
+ 
 centerCardCameraTweaks
   .add(centerCardScene.rotation, 'y')
-  .min(1)
+  .min(0)
   .max(12)
   .step(0.1)
-
+ 
 centerCardCameraTweaks
   .add(centerCardScene.rotation, 'z')
-  .min(1)
+  .min(0)
   .max(12)
   .step(0.1)
-  
-  
+ 
+const rightCardCameraTweaks = cameraTweaks.addFolder('Right Camera')
+   
+rightCardCameraTweaks
+  .add(rightCardScene.rotation, 'x')
+  .min(0)
+  .max(12)
+  .step(0.1)
+   
+rightCardCameraTweaks
+  .add(rightCardScene.rotation, 'y')
+  .min(0)
+  .max(12)
+  .step(0.1)
+   
+rightCardCameraTweaks
+  .add(rightCardScene.rotation, 'z')
+  .min(0)
+  .max(12)
+  .step(0.1)
 
 /**
- * Renderer
- */
-const renderer = new THREE.WebGLRenderer({
-    canvas: canvas
-})
-renderer.setSize(sizes.width, sizes.height)
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+*  Raycater
+*/
+const raycaster = new THREE.Raycaster()
+ 
+let currentIntersect = []
 
 /**
- * Animate
- */
+* Animate
+*/
 const clock = new THREE.Clock()
-
+ 
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
 
-    // Update Camera
-    camera.position.x = cursor.x * 0.5
-    camera.position.y = cursor.y * - 0.5
-    camera.lookAt(0, 0.5, -2)
+    // Cast a Ray
+    raycaster.setFromCamera(mouse, camera)
+ 
+    const objectsToTest = [card, leftCard, rightCard]
+    const intersects = raycaster.intersectObjects(objectsToTest)
 
+    objectsToTest.forEach((object) => object.material.color.set('#ffffff'))
+ 
+    // if(intersects.length === 1){
+    //   // console.log(intersects[0].object.scale);
+    //   objectsToTest.forEach((object) =>
+    //   object.scale.set(0.5, 0.5, 0.5))
+    //   objectsToTest.forEach((object) =>
+    //   object.material.color.set('#4f4f4f'))
+    //   intersects[0].object.scale.set(2, 2, 2)
+    //   intersects[0].object.material.color.set('#ffffff')
+    // } else {
+    //   objectsToTest.forEach((object) =>
+    //   object.scale.set(1, 1, 1))
+    //   objectsToTest.forEach((object) =>
+    //   object.material.color.set('#ffffff'))
+    // }
+    
+    // if(intersects.length)
+    // {
+    //   if(!currentIntersect){
+    //     console.log('mouse enter');
+    //     for( const intersect of intersects)
+    //   {
+    //     intersects[0].object.scale.set(2, 2, 2)
+    //   }
+    //   }
+    //   currentIntersect = intersects[0]
+ 
+    // } else {
+    //   if(currentIntersect){
+    //     console.log('mouse leave');
+    //     for( const object of objectsToTest)
+    // {
+    //   object.material.color.set('#FFFFFF')
+    //   .object.scale.set(1, 1, 1)
+    // }
+    //   }
+    //   currentIntersect = null
+    // }
+ 
+    // Update Camera
+    // camera.position.x = cursor.x * 0.5
+    // camera.position.y = cursor.y * - 0.5
+    // camera.lookAt(0, 0.5, -2)
+    controls.update()
+ 
     // Update Card Cameras
     centerCardCamera.position.x = cursor.x * - 2.5
     centerCardCamera.position.y = cursor.y * 2.5
-    centerCardCamera.lookAt(0, 0.5, -2)
-
-    leftCardCamera.position.x = cursor.x * - 2.5
+    centerCardCamera.lookAt(0, 0, 0)
+ 
+    leftCardCamera.position.x = cursor.x * 2.5
     leftCardCamera.position.y = cursor.y * 2.5
-    leftCardCamera.lookAt(0, 0.5, -2)
-
+    leftCardCamera.lookAt(0, 0, 0)
+ 
     rightCardCamera.position.x = cursor.x * - 2.5
     rightCardCamera.position.y = cursor.y * 2.5
-    rightCardCamera.lookAt(0, 0.5, -2)
-
+    rightCardCamera.lookAt(0, 0, 0)
+ 
     // Center Card Render
     renderer.setRenderTarget(renderTargetCenter)
     renderer.render(centerCardScene, centerCardCamera)
     renderer.setRenderTarget(null)
-
+ 
     // Center Card Render
     renderer.setRenderTarget(renderTargetLeft)
     renderer.render(leftCardScene, leftCardCamera)
     renderer.setRenderTarget(null)
-
+ 
     // Center Card Render
     renderer.setRenderTarget(renderTargetRight)
     renderer.render(rightCardScene, rightCardCamera)
     renderer.setRenderTarget(null)
-
+ 
     // Render
     renderer.render(scene, camera)
 
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }
-
+ 
 tick()
