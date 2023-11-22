@@ -24,6 +24,8 @@ window.addEventListener('keydown', (event) =>
         gui.show(gui._hidden)
 })
 
+const test = 1;
+
 const debugObject = {}
 const debugPlinth = {}
 const debugCard = {}
