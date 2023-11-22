@@ -79,14 +79,25 @@ window.addEventListener('mousemove', (event) =>
   cursor.y = event.clientY / sizes.height - 0.5
 })
 
+let cameraMove = true;
+let cardFocus = false;
+
 window.addEventListener('dblclick', (event)=>
 {
+  if(currentIntersect.object) {
+    cameraMove = false;
+    // gsap.to(camera.position, {duration: 1, x: 0, y: 0, z: 2})
+  }
+
   if(currentIntersect.object === card)
   {
     console.log('animate card1');
- 
+    
+    cardFocus = true
     gsap.to(card.position, {duration: 1, z: 1})
-    gsap.to(card.rotation, {duration: 1, z: (1.5 * Math.PI)})
+    gsap.to(card.rotation, {duration: 1, z: (2 * Math.PI)})
+    gsap.to(card.rotation, {duration: 1, x: (2 * Math.PI)})
+    gsap.to(card.scale, {duration: 1, x: 2, y:2})
 
   } else if(currentIntersect.object === leftCard)
   {
@@ -176,8 +187,11 @@ const cardMaterial = new THREE.MeshBasicMaterial({
 })
 const card = new THREE.Mesh(cardGeometry, cardMaterial)
  
-card.position.y = 0.3
-card.position.z = 0.04
+card.position.y = 0
+card.position.z = 0.33
+
+card.material.side = THREE.DoubleSide
+
 scene.add(card)
  
 const cardTweaks = gui.addFolder('Card Tweaks')
@@ -284,8 +298,8 @@ debugCard.height = 0.18
   const leftCard = new THREE.Mesh(leftCardGeometry, leftCardMaterial)
  
   leftCard.position.x = -0.65
-  leftCard.position.y = 0.3
-  leftCard.position.z = 0.2
+  leftCard.position.y = 0
+  leftCard.position.z = 0.5
  
   leftCard.rotation.y = 0.5
  
@@ -330,8 +344,8 @@ debugCard.height = 0.18
  
  
   rightCard.position.x = 0.65
-  rightCard.position.y = 0.3
-  rightCard.position.z = 0.2
+  rightCard.position.y = 0
+  rightCard.position.z = 0.5
  
   rightCard.rotation.y = -0.5
   scene.add(rightCard)
@@ -370,10 +384,16 @@ gltfLoader.load('/assets/models/squirtle.gltf',
 // Base Camera
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
 camera.position.x = 0
-camera.position.y = 1
+camera.position.y = 0.5
 camera.position.z = 2
-const controls = new OrbitControls( camera, renderer.domElement );
+// const controls = new OrbitControls( camera, renderer.domElement );
 scene.add(camera)
+
+function upadateMainCamera(){
+  camera.position.x = cursor.x * - 2.5
+  camera.position.y = cursor.y * 2.5
+  camera.lookAt(0, 0, 0)
+}
 
 const cameraTweaks = gui.addFolder('Camera Tweaks')
 const mainCameraTweaks = cameraTweaks.addFolder('Main Camera')
@@ -489,7 +509,8 @@ rightCardCameraTweaks
 */
 const raycaster = new THREE.Raycaster()
  
-let currentIntersect = []
+// Animation Dependancies
+let currentIntersect = null
 
 /**
 * Animate
@@ -506,8 +527,26 @@ const tick = () =>
     const objectsToTest = [card, leftCard, rightCard]
     const intersects = raycaster.intersectObjects(objectsToTest)
 
-    objectsToTest.forEach((object) => object.material.color.set('#ffffff'))
+    // objectsToTest.forEach((object) => object.material.color.set('#ffffff'))
+    if(intersects.length)
+    {
+      if(currentIntersect === null){
+        console.log('mouse enter');
+        if(!cardFocus)
+        {
+          gsap.to(intersects[0].object.scale, {delay: 1, duration: .7, x: 1.2, y:1.2});
+          intersects[0].object.material.color.set('#ffffff')
+        }
+      }
+      currentIntersect = intersects[0]
  
+    } else {
+      if(currentIntersect){
+        console.log('mouse leave');
+      }
+      currentIntersect = null
+    }
+    
     // if(intersects.length === 1){
     //   // console.log(intersects[0].object.scale);
     //   objectsToTest.forEach((object) =>
@@ -547,10 +586,8 @@ const tick = () =>
     // }
  
     // Update Camera
-    // camera.position.x = cursor.x * 0.5
-    // camera.position.y = cursor.y * - 0.5
-    // camera.lookAt(0, 0.5, -2)
-    controls.update()
+    
+    cameraMove ? upadateMainCamera() : null;
  
     // Update Card Cameras
     centerCardCamera.position.x = cursor.x * - 2.5
