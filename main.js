@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import gsap from 'gsap'
 import GUI from 'lil-gui'
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { ArcballControls } from 'three/addons/controls/ArcballControls.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
@@ -82,6 +82,10 @@ window.addEventListener('mousemove', (event) =>
 let cameraMove = true;
 let cardFocus = false;
 
+let squirtleFocus = false
+let charmanderFocus = false
+let bulbasaurFocus = false
+
 function sceneReset(){
   gsap.to(card.position, {duration:1, x:0 ,y:0 ,z:0.33 })
   gsap.to(card.scale, { duration:1, x:1 ,y:1 ,z:1 })
@@ -95,11 +99,18 @@ function sceneReset(){
   gsap.to(rightCard.rotation, { duration:1, y:-0.5})
 
   cardFocus =  false;
+  squirtleFocus = false
+  charmanderFocus = false
+  bulbasaurFocus = false
+  cameraMove = true
 }
 
-window.addEventListener('click', (event)=>
+window.addEventListener('mousedown', (event)=>
 {
-  if(currentIntersect.object === card)
+  if(currentIntersect === null){
+    sceneReset()
+  }
+  else if(currentIntersect.object === card)
   {
     gsap.to(card.position, {duration: 1, x:0, y:0, z:0.4})
     gsap.to(card.rotation, {duration: 1, y: 0})
@@ -115,7 +126,10 @@ window.addEventListener('click', (event)=>
 
     cameraMove = false
     cardFocus = true
-    console.log('animate card1');
+
+    charmanderFocus = true
+     squirtleFocus = false
+     bulbasaurFocus = false
 
   } else if(currentIntersect.object === leftCard)
   {
@@ -132,7 +146,10 @@ window.addEventListener('click', (event)=>
 
     cameraMove = false
     cardFocus = true
-    console.log('animate leftCard');
+
+    bulbasaurFocus = true
+    squirtleFocus = false
+    charmanderFocus = false
 
   }else if(currentIntersect.object === rightCard)
   {
@@ -150,10 +167,10 @@ window.addEventListener('click', (event)=>
     cameraMove = false
     cardFocus = true
 
-    console.log('animate rightCard');
+    squirtleFocus = true
+    bulbasaurFocus = false
+    charmanderFocus = false
 
-  } else {
-    sceneReset()
   }
 })
  
@@ -438,6 +455,17 @@ camera.position.z = 2
 // const controls = new OrbitControls( camera, renderer.domElement );
 scene.add(camera)
 
+function updateMainCamera(){
+    camera.position.x = cursor.x * - 2.5
+    camera.position.y = cursor.y * 2.5
+    camera.lookAt(0, 0, 0)
+}
+
+function staticCamera(){
+  gsap.to(camera.position, {duration: 0.5, x:0 , y:0 , z:2})
+  setTimeout(camera.lookAt(0, 0, 0), 1000)
+}
+
 const cameraTweaks = gui.addFolder('Camera Tweaks')
 const mainCameraTweaks = cameraTweaks.addFolder('Main Camera')
    
@@ -488,24 +516,97 @@ const centerCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardS
 centerCardCamera.position.x = 0
 centerCardCamera.position.y = 1
 centerCardCamera.position.z = 4.5
-centerCardCamera.lookAt(0, 0, 0)
+centerCardCamera.rotation.x = 0
+centerCardCamera.rotation.y = 0
+centerCardCamera.rotation.z = 0
+// centerCardCamera.lookAt(0, 0, 0)
 centerCardScene.add(centerCardCamera)
+
+function centerControls(){
+  const centerControls = new ArcballControls(centerCardCamera, canvas)
+  centerControls.enableDamping = true
+  centerControls.enablePan = false
+  centerControls.enableZoom = false
+  centerControls.update()
+}
+
+function centerCameraUpdate(){
+  gsap.to(centerCardCamera.position, {duration: 0.5, x:0 , y:1 , z:4.5})
+  centerCardCamera.rotation.x = 0
+  centerCardCamera.rotation.y = 0
+  centerCardCamera.rotation.z = 0
+
+  centerCardCamera.position.x = cursor.x * - 2.5
+  centerCardCamera.position.y = cursor.y * 2.5
+  centerCardCamera.lookAt(0, 0, 0)
+
+  charmanderFocus = false
+}
  
 // Left Card Camera
 const leftCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 leftCardCamera.position.x = 0
 leftCardCamera.position.y = 1
 leftCardCamera.position.z = - 4.5
-leftCardCamera.lookAt(0, 0, 0)
+leftCardCamera.rotation.x = 0
+leftCardCamera.rotation.y = 0
+leftCardCamera.rotation.z = 0
+// leftCardCamera.lookAt(0, 0, 0)
 leftCardScene.add(leftCardCamera)
+
+function leftControls(){
+  const leftControls = new ArcballControls(leftCardCamera, canvas)
+  leftControls.enableDamping = true
+  leftControls.enablePan = false
+  leftControls.enableZoom = false
+  leftControls.update()
+}
+
+function leftCameraUpdate() {
+  gsap.to(leftCardCamera.position, {duration: 0.5, x:0 , y:1 , z:-4.5})
+  leftCardCamera.rotation.x = 0
+  leftCardCamera.rotation.y = 0
+  leftCardCamera.rotation.z = 0
+
+
+  leftCardCamera.position.x = cursor.x * - 2.5
+  leftCardCamera.position.y = cursor.y * 2.5
+  leftCardCamera.lookAt(0, 0, 0)
+
+  bulbasaurFocus = false
+}
  
 // Right Card Camera
 const rightCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 rightCardCamera.position.x = 0
 rightCardCamera.position.y = 1
 rightCardCamera.position.z = 4.5
-rightCardCamera.lookAt(0,0,0)
+rightCardCamera.rotation.x = 0
+rightCardCamera.rotation.y = 0
+rightCardCamera.rotation.z = 0
+// rightCardCamera.lookAt(0,0,0)
 rightCardScene.add(rightCardCamera)
+
+function rightControls(){
+  const rightControls = new ArcballControls(rightCardCamera, canvas)
+  rightControls.enableDamping = true
+  rightControls.enablePan = false
+  rightControls.enableZoom = false
+  rightControls.update()
+}
+
+function rightCameraUpdate() {
+  gsap.to(rightCardCamera.position, {duration: 0.5, x:0 , y:1 , z:4.5})
+  rightCardCamera.rotation.x = 0
+  rightCardCamera.rotation.y = 0
+  rightCardCamera.rotation.z = 0
+
+  rightCardCamera.position.x = cursor.x * - 2.5
+  rightCardCamera.position.y = cursor.y * 2.5
+  rightCardCamera.lookAt(0, 0, 0)
+
+  squirtleFocus = false
+}
 
 const centerCardCameraTweaks = cameraTweaks.addFolder('Center Camera')
  
@@ -554,7 +655,6 @@ const raycaster = new THREE.Raycaster()
  
 // Animation Dependancies
 let currentIntersect = null
-let hovering = false;
 
 /**
 * Animate
@@ -574,15 +674,14 @@ const tick = () =>
     // changes the state of hovering and logs 
     if(intersects.length)
     {
-      if(currentIntersect === null){
-        console.log('mouse enter');
-        }
+      // if(currentIntersect === null){
+      //   console.log('mouse enter');
+      //   }
       currentIntersect = intersects[0]
     } else {
-      if(currentIntersect){
-        console.log('mouse leave');
-        hovering = true;
-      }
+      // if(currentIntersect){
+      //   console.log('mouse leave');
+      // }
       currentIntersect = null
     }
 
@@ -606,22 +705,33 @@ const tick = () =>
  
     // Update Camera
     
-    camera.position.x = cursor.x * - 2.5
-    camera.position.y = cursor.y * 2.5
-    camera.lookAt(0, 0, 0)
+    cameraMove ? updateMainCamera() : staticCamera()
  
     // Update Card Cameras
-    centerCardCamera.position.x = cursor.x * - 2.5
-    centerCardCamera.position.y = cursor.y * 2.5
-    centerCardCamera.lookAt(0, 0, 0)
+
+    if(charmanderFocus){
+      bulbasaurFocus = false
+      squirtleFocus = false
+    }
+
+    if(bulbasaurFocus){
+      charmanderFocus = false
+      squirtleFocus = false
+    }
+
+    if(squirtleFocus){
+      charmanderFocus = false
+      bulbasaurFocus = false
+    }
+
+    charmanderFocus ? centerControls() : centerCameraUpdate()
+    
  
-    leftCardCamera.position.x = cursor.x * 2.5
-    leftCardCamera.position.y = cursor.y * 2.5
-    leftCardCamera.lookAt(0, 0, 0)
+    bulbasaurFocus ? leftControls() : leftCameraUpdate()
+    
  
-    rightCardCamera.position.x = cursor.x * - 2.5
-    rightCardCamera.position.y = cursor.y * 2.5
-    rightCardCamera.lookAt(0, 0, 0)
+    squirtleFocus ? rightControls() : rightCameraUpdate()
+    
  
     // Center Card Render
     renderer.setRenderTarget(renderTargetCenter)
