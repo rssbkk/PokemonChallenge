@@ -82,31 +82,31 @@ window.addEventListener('mousemove', (event) =>
 let cameraMove = true;
 let cardFocus = false;
 
-window.addEventListener('dblclick', (event)=>
-{
-  if(currentIntersect.object) {
-    cameraMove = false;
-    // gsap.to(camera.position, {duration: 1, x: 0, y: 0, z: 2})
-  }
+// window.addEventListener('dblclick', (event)=>
+// {
+//   if(currentIntersect.object) {
+//     cameraMove = false;
+//     // gsap.to(camera.position, {duration: 1, x: 0, y: 0, z: 2})
+//   }
 
-  if(currentIntersect.object === card)
-  {
-    console.log('animate card1');
+//   if(currentIntersect.object === card)
+//   {
+//     console.log('animate card1');
     
-    cardFocus = true
-    gsap.to(card.position, {duration: 1, z: 1})
-    gsap.to(card.rotation, {duration: 1, z: (2 * Math.PI)})
-    gsap.to(card.rotation, {duration: 1, x: (2 * Math.PI)})
-    gsap.to(card.scale, {duration: 1, x: 2, y:2})
+//     cardFocus = true
+//     gsap.to(card.position, {duration: 1, z: 1})
+//     gsap.to(card.rotation, {duration: 1, z: (2 * Math.PI)})
+//     gsap.to(card.rotation, {duration: 1, x: (2 * Math.PI)})
+//     gsap.to(card.scale, {duration: 1, x: 2, y:2})
 
-  } else if(currentIntersect.object === leftCard)
-  {
-   console.log('animate leftCard');
-  }if(currentIntersect.object === rightCard)
-  {
-    console.log('animate rightCard');
-  }
-})
+//   } else if(currentIntersect.object === leftCard)
+//   {
+//    console.log('animate leftCard');
+//   }if(currentIntersect.object === rightCard)
+//   {
+//     console.log('animate rightCard');
+//   }
+// })
  
 // Mouse
 const mouse = new THREE.Vector2()
@@ -389,12 +389,6 @@ camera.position.z = 2
 // const controls = new OrbitControls( camera, renderer.domElement );
 scene.add(camera)
 
-function upadateMainCamera(){
-  camera.position.x = cursor.x * - 2.5
-  camera.position.y = cursor.y * 2.5
-  camera.lookAt(0, 0, 0)
-}
-
 const cameraTweaks = gui.addFolder('Camera Tweaks')
 const mainCameraTweaks = cameraTweaks.addFolder('Main Camera')
    
@@ -511,6 +505,7 @@ const raycaster = new THREE.Raycaster()
  
 // Animation Dependancies
 let currentIntersect = null
+let hovering = false;
 
 /**
 * Animate
@@ -527,67 +522,38 @@ const tick = () =>
     const objectsToTest = [card, leftCard, rightCard]
     const intersects = raycaster.intersectObjects(objectsToTest)
 
-    // objectsToTest.forEach((object) => object.material.color.set('#ffffff'))
+    // changes the state of hovering and logs 
     if(intersects.length)
     {
       if(currentIntersect === null){
         console.log('mouse enter');
-        if(!cardFocus)
-        {
-          gsap.to(intersects[0].object.scale, {delay: 1, duration: .7, x: 1.2, y:1.2});
-          intersects[0].object.material.color.set('#ffffff')
         }
-      }
       currentIntersect = intersects[0]
- 
     } else {
       if(currentIntersect){
         console.log('mouse leave');
+        hovering = true;
       }
       currentIntersect = null
     }
-    
-    // if(intersects.length === 1){
-    //   // console.log(intersects[0].object.scale);
-    //   objectsToTest.forEach((object) =>
-    //   object.scale.set(0.5, 0.5, 0.5))
-    //   objectsToTest.forEach((object) =>
-    //   object.material.color.set('#4f4f4f'))
-    //   intersects[0].object.scale.set(2, 2, 2)
-    //   intersects[0].object.material.color.set('#ffffff')
-    // } else {
-    //   objectsToTest.forEach((object) =>
-    //   object.scale.set(1, 1, 1))
-    //   objectsToTest.forEach((object) =>
-    //   object.material.color.set('#ffffff'))
-    // }
-    
-    // if(intersects.length)
-    // {
-    //   if(!currentIntersect){
-    //     console.log('mouse enter');
-    //     for( const intersect of intersects)
-    //   {
-    //     intersects[0].object.scale.set(2, 2, 2)
-    //   }
-    //   }
-    //   currentIntersect = intersects[0]
- 
-    // } else {
-    //   if(currentIntersect){
-    //     console.log('mouse leave');
-    //     for( const object of objectsToTest)
-    // {
-    //   object.material.color.set('#FFFFFF')
-    //   .object.scale.set(1, 1, 1)
-    // }
-    //   }
-    //   currentIntersect = null
-    // }
+
+    for(const object of objectsToTest)
+    {
+        object.scale.set(1, 1, 1)
+    }
+
+    for(const intersect of intersects)
+    {
+        intersect.object.scale.set(1.5, 1.5, 1.5)
+    }
+
+
  
     // Update Camera
     
-    cameraMove ? upadateMainCamera() : null;
+    camera.position.x = cursor.x * - 2.5
+    camera.position.y = cursor.y * 2.5
+    camera.lookAt(0, 0, 0)
  
     // Update Card Cameras
     centerCardCamera.position.x = cursor.x * - 2.5
