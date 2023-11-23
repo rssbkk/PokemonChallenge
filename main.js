@@ -82,31 +82,80 @@ window.addEventListener('mousemove', (event) =>
 let cameraMove = true;
 let cardFocus = false;
 
-// window.addEventListener('dblclick', (event)=>
-// {
-//   if(currentIntersect.object) {
-//     cameraMove = false;
-//     // gsap.to(camera.position, {duration: 1, x: 0, y: 0, z: 2})
-//   }
+function sceneReset(){
+  gsap.to(card.position, {duration:1, x:0 ,y:0 ,z:0.33 })
+  gsap.to(card.scale, { duration:1, x:1 ,y:1 ,z:1 })
 
-//   if(currentIntersect.object === card)
-//   {
-//     console.log('animate card1');
-    
-//     cardFocus = true
-//     gsap.to(card.position, {duration: 1, z: 1})
-//     gsap.to(card.rotation, {duration: 1, z: (2 * Math.PI)})
-//     gsap.to(card.rotation, {duration: 1, x: (2 * Math.PI)})
-//     gsap.to(card.scale, {duration: 1, x: 2, y:2})
+  gsap.to(leftCard.position, {duration:1, x:-0.65 ,y:0 ,z:0.5 })
+  gsap.to(leftCard.scale, { duration:1, x:1 ,y:1 ,z:1 })
+  gsap.to(leftCard.rotation, { duration:1, y:0.5})
 
-//   } else if(currentIntersect.object === leftCard)
-//   {
-//    console.log('animate leftCard');
-//   }if(currentIntersect.object === rightCard)
-//   {
-//     console.log('animate rightCard');
-//   }
-// })
+  gsap.to(rightCard.position, {duration:1, x:0.65 ,y:0 ,z:0.5 })
+  gsap.to(rightCard.scale, { duration:1, x:1 ,y:1 ,z:1 })
+  gsap.to(rightCard.rotation, { duration:1, y:-0.5})
+
+  cardFocus =  false;
+}
+
+window.addEventListener('click', (event)=>
+{
+  if(currentIntersect.object === card)
+  {
+    gsap.to(card.position, {duration: 1, x:0, y:0, z:0.4})
+    gsap.to(card.rotation, {duration: 1, y: 0})
+    gsap.to(card.scale, {duration: 1, x:1.6, y: 1.6})
+
+    gsap.to(leftCard.position, {duration: 1, x:-1, y:0, z:0})
+    gsap.to(leftCard.rotation, {duration: 1, y: 0})
+    gsap.to(leftCard.scale, {duration: 1, x:0.5, y: 0.5})
+
+    gsap.to(rightCard.position, {duration: 1, x:1, y:0, z:0})
+    gsap.to(rightCard.rotation, {duration: 1, y: 0})
+    gsap.to(rightCard.scale, {duration: 1, x:0.5, y: 0.5})
+
+    cameraMove = false
+    cardFocus = true
+    console.log('animate card1');
+
+  } else if(currentIntersect.object === leftCard)
+  {
+    gsap.to(leftCard.position, {duration: 1, x:0, y:0, z:0.4})
+    gsap.to(leftCard.rotation, {duration: 1, y: 0})
+    gsap.to(leftCard.scale, {duration: 1, x:1.6, y: 1.6})
+
+    gsap.to(card.position, {duration: 1, x:-1, y:0, z:0})
+    gsap.to(card.scale, {duration: 1, x:0.5, y: 0.5})
+
+    gsap.to(rightCard.position, {duration: 1, x:1, y:0, z:0})
+    gsap.to(rightCard.rotation, {duration: 1, y: 0})
+    gsap.to(rightCard.scale, {duration: 1, x:0.5, y: 0.5})
+
+    cameraMove = false
+    cardFocus = true
+    console.log('animate leftCard');
+
+  }else if(currentIntersect.object === rightCard)
+  {
+    gsap.to(rightCard.position, {duration: 1, x:0, y:0, z:0.4})
+    gsap.to(rightCard.rotation, {duration: 1, y: 0})
+    gsap.to(rightCard.scale, {duration: 1, x:1.6, y: 1.6})
+
+    gsap.to(card.position, {duration: 1, x:-1, y:0, z:0})
+    gsap.to(card.scale, {duration: 1, x:0.5, y: 0.5})
+
+    gsap.to(leftCard.position, {duration: 1, x:1, y:0, z:0})
+    gsap.to(leftCard.rotation, {duration: 1, y: 0})
+    gsap.to(leftCard.scale, {duration: 1, x:0.5, y: 0.5})
+
+    cameraMove = false
+    cardFocus = true
+
+    console.log('animate rightCard');
+
+  } else {
+    sceneReset()
+  }
+})
  
 // Mouse
 const mouse = new THREE.Vector2()
@@ -539,15 +588,21 @@ const tick = () =>
 
     for(const object of objectsToTest)
     {
+      if(!cardFocus){
         object.scale.set(1, 1, 1)
+      }
     }
 
     for(const intersect of intersects)
     {
+        if(!cardFocus){
         intersect.object.scale.set(1.5, 1.5, 1.5)
+        }
     }
 
-
+    if(intersects.object === card){
+      console.log("hello");
+    }
  
     // Update Camera
     
@@ -591,3 +646,6 @@ const tick = () =>
 }
  
 tick()
+console.log(card.position);
+console.log(leftCard.position);
+console.log(rightCard.position);
