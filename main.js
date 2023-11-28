@@ -717,6 +717,21 @@ const raycaster = new THREE.Raycaster()
 // Animation Dependancies
 let currentIntersect = null
 
+if(charmanderFocus){
+  bulbasaurFocus = false
+  squirtleFocus = false
+}
+
+if(bulbasaurFocus){
+  charmanderFocus = false
+  squirtleFocus = false
+}
+
+if(squirtleFocus){
+  charmanderFocus = false
+  bulbasaurFocus = false
+}
+
 /**
 * Animate
 */
@@ -769,21 +784,6 @@ const tick = () =>
     cameraMove ? updateMainCamera() : staticCamera()
  
     // Update Card Cameras
-
-    if(charmanderFocus){
-      bulbasaurFocus = false
-      squirtleFocus = false
-    }
-
-    if(bulbasaurFocus){
-      charmanderFocus = false
-      squirtleFocus = false
-    }
-
-    if(squirtleFocus){
-      charmanderFocus = false
-      bulbasaurFocus = false
-    }
 
     charmanderFocus ? centerControls() : centerCameraUpdate()
     
