@@ -9,10 +9,33 @@ import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 /**
 * Loaders
 */
+const loadingBarElement = document.querySelector('.loadingBar')
+
+const loadingManager = new THREE.LoadingManager(
+  // Loaded
+  () =>
+    {
+      window.setTimeout(() =>
+    {
+      gsap.to(overlayMaterial.uniforms.uAlpha, { duration: 3, value: 0 })
+
+      loadingBarElement.classList.add('ended')
+      loadingBarElement.style.transform = ''
+    }, 500)
+  },
+
+  // Progress
+    (itemUrl, itemsLoaded, itemsTotal) =>
+    {
+      const progressRatio = itemsLoaded / itemsTotal
+      loadingBarElement.style.transform = `scaleX(${progressRatio})`
+    }
+)
 const rgbeLoader = new RGBELoader()
-const loader = new THREE.TextureLoader();
-const gltfLoader = new GLTFLoader();
+const loader = new THREE.TextureLoader(loadingManager);
+const gltfLoader = new GLTFLoader(loadingManager);
 const dracoLoader = new DRACOLoader();
+
  
 /**
 * Debug
@@ -196,6 +219,35 @@ const leftCardScene = new THREE.Scene()
 // Right Card Scene
 const rightCardScene = new THREE.Scene()
 rightCardScene.rotation.y = 5.5
+
+/**
+ * Overlay
+ */
+
+const overlayGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
+const overlayMaterial = new THREE.ShaderMaterial({
+  transparent: true,
+  uniforms:
+    {
+        uAlpha: { value: 1 }
+    },
+  vertexShader: `
+      void main()
+      {
+          gl_Position = vec4(position, 1.0);
+      }
+  `,
+  fragmentShader: `
+        uniform float uAlpha;
+
+        void main()
+        {
+            gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+        }
+  `
+})
+const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial)
+scene.add(overlay)
  
 /**
 * Environment Maps (RGBE Equirectangular) & (LDR Cube Maps)
@@ -527,7 +579,7 @@ function centerControls(){
   centerControls.enableDamping = true
   centerControls.enablePan = false
   centerControls.enableZoom = false
-  centerControls.update()
+  // centerControls.update()
 }
 
 function centerCameraUpdate(){
@@ -539,6 +591,9 @@ function centerCameraUpdate(){
   centerCardCamera.position.x = cursor.x * - 2.5
   centerCardCamera.position.y = cursor.y * 2.5
   centerCardCamera.lookAt(0, 0, 0)
+
+  centerControls.enabled = false
+  // centerControls.update()
 
   charmanderFocus = false
 }
@@ -559,7 +614,7 @@ function leftControls(){
   leftControls.enableDamping = true
   leftControls.enablePan = false
   leftControls.enableZoom = false
-  leftControls.update()
+  // leftControls.update()
 }
 
 function leftCameraUpdate() {
@@ -572,6 +627,9 @@ function leftCameraUpdate() {
   leftCardCamera.position.x = cursor.x * - 2.5
   leftCardCamera.position.y = cursor.y * 2.5
   leftCardCamera.lookAt(0, 0, 0)
+
+  leftControls.enabled = false
+  // leftControls.update()
 
   bulbasaurFocus = false
 }
@@ -592,7 +650,7 @@ function rightControls(){
   rightControls.enableDamping = true
   rightControls.enablePan = false
   rightControls.enableZoom = false
-  rightControls.update()
+  // rightControls.update()
 }
 
 function rightCameraUpdate() {
@@ -604,6 +662,9 @@ function rightCameraUpdate() {
   rightCardCamera.position.x = cursor.x * - 2.5
   rightCardCamera.position.y = cursor.y * 2.5
   rightCardCamera.lookAt(0, 0, 0)
+
+  rightControls.enabled = false
+  // rightControls.update()
 
   squirtleFocus = false
 }
@@ -756,6 +817,3 @@ const tick = () =>
 }
  
 tick()
-console.log(card.position);
-console.log(leftCard.position);
-console.log(rightCard.position);
