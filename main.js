@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import GUI from 'lil-gui'
 import { ArcballControls } from 'three/addons/controls/ArcballControls.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
@@ -108,10 +109,12 @@ let cardFocus = false;
 let squirtleFocus = false
 let charmanderFocus = false
 let bulbasaurFocus = false
+let active = false
 
 function sceneReset(){
   gsap.to(card.position, {duration:1, x:0 ,y:0 ,z:0.33 })
   gsap.to(card.scale, { duration:1, x:1 ,y:1 ,z:1 })
+  // gsap.to(card.rotation, { duration: 1, y:(Math.PI * 2) })h
 
   gsap.to(leftCard.position, {duration:1, x:-0.65 ,y:0 ,z:0.5 })
   gsap.to(leftCard.scale, { duration:1, x:1 ,y:1 ,z:1 })
@@ -130,7 +133,7 @@ function sceneReset(){
 
 window.addEventListener('mousedown', (event)=>
 {
-  if(currentIntersect === null){
+  if(currentIntersect === null && active){
     sceneReset()
   }
   else if(currentIntersect.object === card)
@@ -193,7 +196,6 @@ window.addEventListener('mousedown', (event)=>
     squirtleFocus = true
     bulbasaurFocus = false
     charmanderFocus = false
-
   }
 })
  
@@ -223,27 +225,26 @@ rightCardScene.rotation.y = 5.5
 /**
  * Overlay
  */
-
 const overlayGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
 const overlayMaterial = new THREE.ShaderMaterial({
   transparent: true,
   uniforms:
     {
-        uAlpha: { value: 1 }
+      uAlpha: { value: 1 }
     },
   vertexShader: `
-      void main()
-      {
-          gl_Position = vec4(position, 1.0);
-      }
+    void main()
+    {
+      gl_Position = vec4(position, 1.0);
+    }
   `,
   fragmentShader: `
-        uniform float uAlpha;
+    uniform float uAlpha;
 
-        void main()
-        {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
-        }
+    void main()
+    {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+    }
   `
 })
 const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial)
@@ -279,6 +280,9 @@ const rightCardEnvMap = loader.load("assets/environmentMaps/squirtleBG.jpg",
 /**
  * LIGHTS
  */
+const AmbientLight = new THREE.AmbientLight(0x404040, 80)
+scene.add(AmbientLight)
+
 const centerAmbientLight = new THREE.AmbientLight(0x404040, 80)
 const leftAmbientLight = new THREE.AmbientLight(0x404040, 100)
 const rightAmbientLight = new THREE.AmbientLight(0x404040, 100)
@@ -308,7 +312,7 @@ const card = new THREE.Mesh(cardGeometry, cardMaterial)
 card.position.y = 0
 card.position.z = 0.33
 
-card.material.side = THREE.DoubleSide
+card.rotation.y = Math.PI
 
 scene.add(card)
  
@@ -341,10 +345,10 @@ cardTweaks
  
 debugCard.spin = () =>
 {
-    gsap.to(card.rotation, { duration: 1, y: card.rotation.y + Math.PI * 2 })
+  gsap.to(card.rotation, { duration: 1, y: card.rotation.y + Math.PI * 2 })
 }
 cardTweaks
-    .add(debugCard, 'spin')
+  .add(debugCard, 'spin')
  
 debugCard.subdivision = 2
 cardTweaks
@@ -419,7 +423,7 @@ debugCard.height = 0.18
   leftCard.position.y = 0
   leftCard.position.z = 0.5
  
-  leftCard.rotation.y = 0.5
+  leftCard.rotation.y = Math.PI + 0.5
  
   scene.add(leftCard)
  
@@ -465,7 +469,7 @@ debugCard.height = 0.18
   rightCard.position.y = 0
   rightCard.position.z = 0.5
  
-  rightCard.rotation.y = -0.5
+  rightCard.rotation.y = -(Math.PI) -0.5
   scene.add(rightCard)
 
   const rightCardTweaks = gui.addFolder('Right Card Tweaks')
@@ -475,7 +479,6 @@ debugCard.height = 0.18
     .add(rightCard, 'visible')
  
 // inTargetObject
-
 gltfLoader.load('/assets/models/charmander.gltf',
 (gltf) =>
 {
@@ -496,15 +499,86 @@ gltfLoader.load('/assets/models/squirtle.gltf',
 }
 ) 
 
+// PokeBall
+
+const pokeballs = new THREE.Group()
+
+gltfLoader.load('/assets/models/pokeball2.gltf',
+(gltf) =>
+{
+  gltf.scene.scale.x = 0.3
+  gltf.scene.scale.y = 0.3
+  gltf.scene.scale.z = 0.3
+
+  gltf.scene.rotation.y = Math.PI
+
+  pokeballs.add(gltf.scene)
+})
+gltfLoader.load('/assets/models/pokeball2.gltf',
+(gltf) =>
+{
+  gltf.scene.scale.x = 0.3
+  gltf.scene.scale.y = 0.3
+  gltf.scene.scale.z = 0.3
+
+  gltf.scene.position.x = 0.8
+
+  gltf.scene.rotation.y = Math.PI
+
+  pokeballs.add(gltf.scene)
+})
+gltfLoader.load('/assets/models/pokeball2.gltf',
+(gltf) =>
+{
+  gltf.scene.scale.x = 0.3
+  gltf.scene.scale.y = 0.3
+  gltf.scene.scale.z = 0.3
+
+  gltf.scene.position.x = -0.8
+  
+  gltf.scene.rotation.y = Math.PI
+
+  pokeballs.add(gltf.scene)
+})
+
+scene.add( pokeballs )
+
+let fresh = true
+const enteranceText = document.querySelector('.enteranceText')
+
+window.addEventListener('dblclick', () =>
+  {
+    if(fresh)
+    {
+    fresh = false
+    active = true
+
+    gsap.to(pokeballs.position, { duration: 1, y: -3 })
+    gsap.to(card.rotation, {duration: 0.5, y: 0})
+    gsap.to(leftCard.rotation, {duration: 0.5, y: 0 + 0.5})
+    gsap.to(rightCard.rotation, {duration: 0.5, y: 0 - 0.5})
+
+    loadingBarElement.classList.add('ended')
+    enteranceText.classList.add('away')
+    }
+  })
+
 /**
 * Camera
 */
+// Test Camera
+const testCamera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
+const testControls = new OrbitControls( testCamera, canvas);
+testCamera.position.x = 0
+testCamera.position.y = 0.5
+testCamera.position.z = 2
+scene.add(testCamera)
+
 // Base Camera
 const camera = new THREE.PerspectiveCamera(45, sizes.width / sizes.height, 0.1, 100)
 camera.position.x = 0
 camera.position.y = 0.5
 camera.position.z = 2
-// const controls = new OrbitControls( camera, renderer.domElement );
 scene.add(camera)
 
 function updateMainCamera(){
@@ -562,7 +636,7 @@ mainCameraTweaks
   .max(12)
   .step(0.1)
   .name('Camera position z')
- 
+
 // Center Card Camera
 const centerCardCamera = new THREE.PerspectiveCamera(45, cardSizes.width / cardSizes.height, 0.1, 100)
 centerCardCamera.position.x = 0
@@ -576,6 +650,7 @@ centerCardScene.add(centerCardCamera)
 
 function centerControls(){
   const centerControls = new ArcballControls(centerCardCamera, canvas)
+  centerControls.enabled = true
   centerControls.enableDamping = true
   centerControls.enablePan = false
   centerControls.enableZoom = false
@@ -611,6 +686,7 @@ leftCardScene.add(leftCardCamera)
 
 function leftControls(){
   const leftControls = new ArcballControls(leftCardCamera, canvas)
+  leftControls.enabled = true
   leftControls.enableDamping = true
   leftControls.enablePan = false
   leftControls.enableZoom = false
@@ -647,6 +723,7 @@ rightCardScene.add(rightCardCamera)
 
 function rightControls(){
   const rightControls = new ArcballControls(rightCardCamera, canvas)
+  rightControls.enabled = true
   rightControls.enableDamping = true
   rightControls.enablePan = false
   rightControls.enableZoom = false
@@ -713,23 +790,56 @@ rightCardCameraTweaks
 *  Raycater
 */
 const raycaster = new THREE.Raycaster()
+
+/**
+ * Interaction Dependancies
+ */
+const charmanderTitle = document.querySelector('.charmander')
+const bulbasaurTitle = document.querySelector('.bulbasaur')
+const squirtleTitle = document.querySelector('.squirtle')
+const guidence = document.querySelector('.guidence')
  
 // Animation Dependancies
 let currentIntersect = null
 
-if(charmanderFocus){
-  bulbasaurFocus = false
-  squirtleFocus = false
+function addText()
+{
+  guidence.classList.add('animate')
 }
 
-if(bulbasaurFocus){
-  charmanderFocus = false
-  squirtleFocus = false
+function removeText()
+{
+  guidence.classList.remove('animate')
+  charmanderTitle.classList.remove('animate')
+  bulbasaurTitle.classList.remove('animate')
+  squirtleTitle.classList.remove('animate')
 }
 
-if(squirtleFocus){
+function charmanderInFocus()
+{
+  bulbasaurFocus = false
+  squirtleFocus = false
+  charmanderTitle.classList.add('animate')
+  bulbasaurTitle.classList.remove('animate')
+  squirtleTitle.classList.remove('animate')
+}
+
+function bulbasaurInFocus()
+{
+  charmanderFocus = false
+  squirtleFocus = false
+  bulbasaurTitle.classList.add('animate')
+  squirtleTitle.classList.remove('animate')
+  charmanderTitle.classList.remove('animate')
+}
+
+function squirtleInFocus()
+{
   charmanderFocus = false
   bulbasaurFocus = false
+  squirtleTitle.classList.add('animate')
+  charmanderTitle.classList.remove('animate')
+  bulbasaurTitle.classList.remove('animate')
 }
 
 /**
@@ -740,6 +850,8 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
+
+    testControls.update()
 
     // Cast a Ray
     raycaster.setFromCamera(mouse, camera)
@@ -771,40 +883,37 @@ const tick = () =>
     for(const intersect of intersects)
     {
         if(!cardFocus){
-        intersect.object.scale.set(1.5, 1.5, 1.5)
+        intersect.object.scale.set(1.2, 1.2, 1.2)
         }
-    }
-
-    if(intersects.object === card){
-      console.log("hello");
     }
  
     // Update Camera
-    
     cameraMove ? updateMainCamera() : staticCamera()
  
     // Update Card Cameras
-
     charmanderFocus ? centerControls() : centerCameraUpdate()
     
- 
     bulbasaurFocus ? leftControls() : leftCameraUpdate()
     
- 
     squirtleFocus ? rightControls() : rightCameraUpdate()
-    
+
+    // Update text
+    cardFocus ? addText() : removeText()
+    charmanderFocus ? charmanderInFocus() : null
+    bulbasaurFocus ? bulbasaurInFocus() : null
+    squirtleFocus ? squirtleInFocus() : null
  
     // Center Card Render
     renderer.setRenderTarget(renderTargetCenter)
     renderer.render(centerCardScene, centerCardCamera)
     renderer.setRenderTarget(null)
  
-    // Center Card Render
+    // Left Card Render
     renderer.setRenderTarget(renderTargetLeft)
     renderer.render(leftCardScene, leftCardCamera)
     renderer.setRenderTarget(null)
  
-    // Center Card Render
+    // Right Card Render
     renderer.setRenderTarget(renderTargetRight)
     renderer.render(rightCardScene, rightCardCamera)
     renderer.setRenderTarget(null)
