@@ -253,7 +253,7 @@ scene.add(overlay)
 /**
 * Environment Maps (RGBE Equirectangular) & (LDR Cube Maps)
 */
-const centerCardEnvMap = loader.load("./assets/environmentMaps/charmanderBG.jpg",
+const centerCardEnvMap = loader.load("assets/environmentMaps/charmanderBG.jpg",
     () => {
       const centerCardBG = new THREE.WebGLCubeRenderTarget(centerCardEnvMap.image.height);
       centerCardBG.fromEquirectangularTexture(renderer, centerCardEnvMap);
@@ -261,7 +261,7 @@ const centerCardEnvMap = loader.load("./assets/environmentMaps/charmanderBG.jpg"
     }
   );
  
-const leftCardEnvMap = loader.load("./assets/environmentMaps/bulbasaurBG.jpg",
+const leftCardEnvMap = loader.load("assets/environmentMaps/bulbasaurBG.jpg",
     () => {
       const leftCardBG = new THREE.WebGLCubeRenderTarget(leftCardEnvMap.image.height);
       leftCardBG.fromEquirectangularTexture(renderer, leftCardEnvMap);
@@ -269,7 +269,7 @@ const leftCardEnvMap = loader.load("./assets/environmentMaps/bulbasaurBG.jpg",
     }
   );
  
-const rightCardEnvMap = loader.load("./assets/environmentMaps/squirtleBG.jpg",
+const rightCardEnvMap = loader.load("assets/environmentMaps/squirtleBG.jpg",
     () => {
       const rightCardBG = new THREE.WebGLCubeRenderTarget(rightCardEnvMap.image.height);
       rightCardBG.fromEquirectangularTexture(renderer, rightCardEnvMap);
@@ -479,20 +479,20 @@ debugCard.height = 0.18
     .add(rightCard, 'visible')
  
 // inTargetObject
-gltfLoader.load('./assets/models/charmander.gltf',
+gltfLoader.load('assets/models/charmander.gltf',
 (gltf) =>
 {
   centerCardScene.add(gltf.scene)
 }
 ) 
-gltfLoader.load('./assets/models/bulbasaur.gltf',
+gltfLoader.load('assets/models/bulbasaur.gltf',
 (gltf) =>
 {
   gltf.scene.rotation.y = Math.PI
   leftCardScene.add(gltf.scene)
 }
 ) 
-gltfLoader.load('./assets/models/squirtle.gltf',
+gltfLoader.load('assets/models/squirtle.gltf',
 (gltf) =>
 {
   rightCardScene.add(gltf.scene)
@@ -503,7 +503,7 @@ gltfLoader.load('./assets/models/squirtle.gltf',
 
 const pokeballs = new THREE.Group()
 
-gltfLoader.load('./assets/models/pokeball2.gltf',
+gltfLoader.load('assets/models/pokeball2.gltf',
 (gltf) =>
 {
   gltf.scene.scale.x = 0.3
@@ -514,7 +514,7 @@ gltfLoader.load('./assets/models/pokeball2.gltf',
 
   pokeballs.add(gltf.scene)
 })
-gltfLoader.load('./assets/models/pokeball2.gltf',
+gltfLoader.load('assets/models/pokeball2.gltf',
 (gltf) =>
 {
   gltf.scene.scale.x = 0.3
@@ -527,7 +527,7 @@ gltfLoader.load('./assets/models/pokeball2.gltf',
 
   pokeballs.add(gltf.scene)
 })
-gltfLoader.load('./assets/models/pokeball2.gltf',
+gltfLoader.load('assets/models/pokeball2.gltf',
 (gltf) =>
 {
   gltf.scene.scale.x = 0.3
